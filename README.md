@@ -1,2 +1,2 @@
-# MultiCLient-Server Communication 
+# MultiClient-Server Communication 
 Multiclient-Server communication on Linux using Sockets
