@@ -17,7 +17,7 @@
 // Macros
 #define TRUE 	1
 #define FALSE 	0
-#define PORT 	888
+#define PORT 	8888
 
 int main(int argc, char *argv[]){
 	// Variable declarations
@@ -35,19 +35,19 @@ int main(int argc, char *argv[]){
 	
 	struct sockaddr_in address;     // Used for Socket Configurations
 	
-	char buffer[1025];
+	char buffer[1025]; 	// A Buffer to store data sent by a client 
 
 	fd_set readfds;  // A file descriptor for read operations
 	char *message = "Acknowlegment message from the Server \r\n";
 
 	// Initialize all client_socket[] to 0, i.e. server not connected to any socket
 	for (i=0; i< max_clients; i++){
-		client_socket[i] = 0;
+		client_sockets[i] = 0;
 	}
 
 	// Create a master socket, i.e. Server Socket  
 	
-	if ( (master_socket = socket(AF_INET, SOCKET_STREAM, 0))==0){
+	if ( (master_socket = socket(AF_INET, SOCK_STREAM, 0))==0){
 		// Socket not created
 		perror("Socket failed");
 		exit(EXIT_FAILURE);
@@ -63,8 +63,38 @@ int main(int argc, char *argv[]){
 	perror("setSockOpt");
 	exit(EXIT_FAILURE);
 	}	
+	
+	// Setting server socket configurations 
+	address.sin_family = AF_INET;  		// The socket is assigned IPV4 Address
+	address.sin_addr.s_addr = INADDR_ANY;  	// the socket can listen to listen connections over LAN, WIFI, or any other
+	address.sin_port = htons(PORT);   	// The socket is assigned PORT number 8888, which is the localhost. Port can be any number between [1024, 6535]
+	
+	// Bind socket to server configurations set above
+	
+	if(bind(master_socket,(struct sockaddr *)&address, sizeof(address))<0){
+		// Binding failed
+		perror("Bind Failed");
+		exit(EXIT_FAILURE);
+	}
 
+	// Listen for client connection requests
+	
+	printf("Listening on Port: %d \n", PORT);
+	
+	// Allow maximum of 2 client connection request pending
+	if(listen(master_socket, 2)<0){
+		perror("Listen");
+		exit(EXIT_FAILURE);
+	}
 
+	
+	// Accept incoming connection
+	addrlen = sizeof(address);
+	puts("Waiting for connections....");
+
+	while(TRUE){
+
+	}
 	return 0;
 
 }
