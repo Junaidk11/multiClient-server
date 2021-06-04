@@ -93,8 +93,121 @@ int main(int argc, char *argv[]){
 	puts("Waiting for connections....");
 
 	while(TRUE){
+		// clear socket set
+		FD_ZERO(&readfds);
 
-	}
+		// add master to set
+		FD_SET(master_socket, &readfds);
+
+		max_sd = master_socket; 
+
+		// Print Server socket value
+		printf("Value of master socket is: %d \n", master_socket);
+		
+
+		// Add child sockets to the set
+		
+		for(i=0; i<max_clients; i++){
+
+			printf("Adding child socket to the set. \n");
+
+			sd = client_sockets[i];
+
+			if(sd>0){
+				FD_SET(sd, &readfds);
+			}
+
+			// Highest file descriptor number -> need for select() 
+			if(sd > max_sd){
+				max_sd = sd;
+			}
+		} // End of for-loop
+
+
+		printf("BEFORE SELECT \n");
+
+		// Wait for an activity on one of the sockets 
+		// Timeout is set to NULL, i.e. wait until a client socket is ready for a read operation
+		activity = select(max_sd+1, &readfds, NULL, NULL, NULL);
+		printf("AFTER SELECT \n");
+
+		// Check for any kind of activity error
+		if( (activity < 0) && (errno!=EINTR)){
+			printf("Select() error");
+		}
+		
+		// There was activity on the server socket 
+		// i.e. A client wants to establish connection with the server
+		if(FD_ISSET(master_socket, &readfds)){
+			
+			if((client_soc = accept(master_socket, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){
+				// Failed to establish connection with the client
+				perror("Accept error");
+				exit(EXIT_FAILURE);
+			}
+
+			// New connection established.
+			// Inform user of socket number assigned to the new client, this socket number used in send/receive commands
+			printf("New connection, Socket fd: %d, IP: %s, Port: %d \n", client_soc, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+			// Send New Connection acknowledgment message to the client 
+			if(send(client_soc, message, strlen(message), 0) != strlen(message)){
+				// Sending message to client failed. 
+				perror("Server ack failed");
+			}
+
+			puts("Acknowledgment message sent successfully by the Server to the client.");
+
+			// Add the new client connection to the set
+
+			for(i=0; i<max_clients; i++){
+
+				// Add new client to the set if there is room 
+				if(client_sockets[i] ==0){
+					client_sockets[i] = client_soc;
+					break;
+				}
+			}
+			
+		}
+		 
+		// The activity  is some I/O operation on some other socket in the set 
+		
+		for (i=0; i<max_clients; i++){
+			
+			sd = client_sockets[i];
+
+			printf("I//O Operation on Client socket: %d \n", sd);
+
+			if(FD_ISSET(sd, &readfds)){
+				// If a  Send/Recieve was set on the respective client socket
+				// That client socket is now ready for a read operation
+				
+				printf("Client Socket for reading is set. \n");
+
+				// Check if client socket sent messages, else close the connection
+				if((valread = read(sd, buffer, 1024))==0){
+
+					// No bytes recieved from the client
+					printf("No bytes retured from read. \n");
+
+					// Close the respective socket and mark as 0 in the client socket list
+					close(sd);
+					client_sockets[i] = 0;
+				}else{
+				 	// Read bytes from the client socket,
+					// echo the message read from the client
+
+					printf("Reading client message. Message: %s \n", buffer);
+
+					buffer[valread] = '\0';
+
+					send(sd, buffer, strlen(buffer), 0); 
+				}
+			}
+		} // End for-loop
+
+	} // End while-loop
+
 	return 0;
 
 }
