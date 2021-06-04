@@ -196,13 +196,13 @@ int main(int argc, char *argv[]){
 					client_sockets[i] = 0;
 				}else{
 				 	// Read bytes from the client socket,
-					// echo the message read from the client
-
-					printf("Reading client message. Message: %s \n", buffer);
+					// echo the message read from the client back to the client
+					
+					printf("Client Message: %s \n", buffer);
 
 					buffer[valread] = '\0';
 
-					send(sd, buffer, strlen(buffer), 0); 
+					send(sd, buffer, strlen(buffer), 0); // Sending a message to the client socket
 				}
 			}
 		} // End for-loop
