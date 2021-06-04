@@ -93,12 +93,13 @@ int main(int argc, char *argv[]){
 	puts("Waiting for connections....");
 
 	while(TRUE){
+
+		// After select() used, ALWAYS reset the descripter set for each operation
 		// clear socket set
 		FD_ZERO(&readfds);
 
 		// add master to set
 		FD_SET(master_socket, &readfds);
-
 		max_sd = master_socket; 
 
 		// Print Server socket value
