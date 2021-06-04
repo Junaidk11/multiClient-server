@@ -21,6 +21,7 @@
 
 int main(int argc, char *argv[]){
 	// Variable declarations
+	int opt = TRUE;  		// Used for configuring Server socket to allow for multiple connections
 	int master_socket; 		
         int addrlen;
         int client_soc; 
@@ -32,8 +33,38 @@ int main(int argc, char *argv[]){
         int sd; 
 	int max_sd; 			// Maximum file descriptors
 	
-	struct sockaddr_in address; 
+	struct sockaddr_in address;     // Used for Socket Configurations
 	
+	char buffer[1025];
+
+	fd_set readfds;  // A file descriptor for read operations
+	char *message = "Acknowlegment message from the Server \r\n";
+
+	// Initialize all client_socket[] to 0, i.e. server not connected to any socket
+	for (i=0; i< max_clients; i++){
+		client_socket[i] = 0;
+	}
+
+	// Create a master socket, i.e. Server Socket  
+	
+	if ( (master_socket = socket(AF_INET, SOCKET_STREAM, 0))==0){
+		// Socket not created
+		perror("Socket failed");
+		exit(EXIT_FAILURE);
+	}
+
+	// Master socket created, set socket configurations
+	// The following is used to configure master socket
+	// to allow for multiple client connections -> Best practices
+	
+	if( setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt))<0){
+
+	// Failed
+	perror("setSockOpt");
+	exit(EXIT_FAILURE);
+	}	
+
+
 	return 0;
 
 }
